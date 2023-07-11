@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.vscode/launch.json
+.vscode/PythonImportHelper-v2-Completion.json
+.vscode/settings.json
+server/client_secret_114881101091-l304372p56tj1au36hqis1j2icbep2hs.apps.googleusercontent.com.json
+server/fahad_s_textsharer_admin_sdk.json
+server/fahad_s_textsharer_webapp_config.json
