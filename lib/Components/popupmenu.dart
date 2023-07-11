@@ -12,6 +12,10 @@ class PopupMenu extends StatelessWidget {
       Navigator.pushNamed(context, '/devices');
     }
 
+    void handleHistoryClick() {
+      Navigator.pushNamed(context, '/history');
+    }
+
     return PopupMenuButton<int>(
       shape: const RoundedRectangleBorder(
           side: BorderSide(color: Colors.white10),
@@ -78,7 +82,7 @@ class PopupMenu extends StatelessWidget {
       onSelected: (value) {
         // if value 1 show dialog
         if (value == 1) {
-          () {};
+          handleHistoryClick();
           // if value 2 show dialog
         } else if (value == 2) {
           handleDevicesClick();

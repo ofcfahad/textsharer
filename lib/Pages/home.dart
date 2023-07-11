@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: BlurredAppBar(
-        title: const Text('text Sharer'),
+        title: const Text('Text Sharer'),
         actions: [
           PopupMenu(
             deviceIcon: deviceIcon,

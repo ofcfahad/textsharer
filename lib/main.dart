@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firedart/firedart.dart';
 import 'package:textsharer/Components/backgroundwrapper.dart';
 import 'package:textsharer/Pages/devices.dart';
+import 'package:textsharer/Pages/history.dart';
 import 'package:textsharer/Pages/home.dart';
 import 'package:textsharer/Pages/pair_device.dart';
 import 'package:textsharer/Pages/register.dart';
@@ -50,6 +51,7 @@ class MainApp extends StatelessWidget {
         '/devices': (context) => const BackgroundWrapper(child: Devices()),
         '/pair-device': (context) =>
             const BackgroundWrapper(child: PairDevice()),
+        '/history': (context) => const BackgroundWrapper(child: History())
       },
     );
   }
