@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:textsharer/Components/appbar.dart';
@@ -15,7 +17,8 @@ class _HomePageState extends State<HomePage> {
   String deviceModel = 'Loading.....';
   bool showModel = false;
   IconData deviceIcon = Icons.developer_mode;
-  TextEditingController value = TextEditingController();
+  TextEditingController textController = TextEditingController();
+  String textControllerValue = '';
 
   void getDeviceInfo() async {
     setState(() {
@@ -39,21 +42,29 @@ class _HomePageState extends State<HomePage> {
     if (cdata != null && cdata.text != null && cdata.text!.isNotEmpty) {
       String copiedText = cdata.text!;
       setState(() {
-        value.text = copiedText;
+        textController.text = copiedText;
       });
     }
   }
 
   void handleClearButtonClick() {
     setState(() {
-      value.text = '';
+      textController.text = '';
     });
   }
 
-  void handleSendButton() async {}
+  void handleSendButton() async {
+    print(textController.text);
+  }
 
-  void sendText() async {
-    print('yup');
+  void handleAddButton() async {
+    print('*adds*');
+  }
+
+  void handleTextChange(value) {
+    setState(() {
+      textControllerValue = textController.text;
+    });
   }
 
   @override
@@ -78,58 +89,115 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: <Widget>[
           // Main content of the screen
+          const Center(),
           Container(
               // Add main content widgets here
               ),
           // Chat bar widget fixed at the bottom
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: <Widget>[
-                  // Add your chat bar widgets here
-                  const Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Type something...',
-                        border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(30))),
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                color: Colors.black
+                    .withOpacity(0.5), // Use a semi-transparent color
+                padding: const EdgeInsets.all(2),
+                child: ClipRect(
+                  // Apply the blur effect within the clip rect
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 5,
+                      sigmaY: 5,
+                    ),
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all(Colors.white10),
+                              shape: MaterialStateProperty.all(
+                                const CircleBorder(side: BorderSide.none),
+                              ),
+                              iconColor:
+                                  MaterialStateProperty.all(Colors.white),
+                            ),
+                            onPressed: handleAddButton,
+                            child: const Center(
+                              child: SizedBox(
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                          ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 500),
+                            curve: Curves.easeInOut,
+                            width: textControllerValue.isNotEmpty ? 250 : 200,
+                            height: 35,
+                            child: TextField(
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 15),
+                              cursorColor: Colors.amberAccent,
+                              decoration: const InputDecoration(
+                                filled: true,
+                                focusColor: Colors.amberAccent,
+                                fillColor: Colors.white10,
+                                hintText: 'Type something...',
+                                hintStyle: TextStyle(color: Colors.white),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(30)),
+                                ),
+                                contentPadding: EdgeInsets.only(left: 10),
+                              ),
+                              controller: textController,
+                              onChanged: handleTextChange,
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  textControllerValue.isNotEmpty
+                                      ? Colors.white10
+                                      : Colors.transparent),
+                              shape: MaterialStateProperty.all(
+                                const CircleBorder(side: BorderSide.none),
+                              ),
+                              padding: MaterialStateProperty.all(
+                                const EdgeInsets.only(top: 1, left: 2),
+                              ),
+                              iconColor: MaterialStateProperty.all(
+                                textControllerValue.isNotEmpty
+                                    ? Colors.white
+                                    : Colors.white24,
+                              ),
+                            ),
+                            onPressed: handleSendButton,
+                            child: const Icon(
+                              Icons.send_rounded,
+                              size: 20,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16.0),
-                  ElevatedButton(
-                    style: const ButtonStyle(
-                        backgroundColor:
-                            MaterialStatePropertyAll(Colors.transparent),
-                        shape: MaterialStatePropertyAll(
-                            CircleBorder(side: BorderSide.none)),
-                        padding: MaterialStatePropertyAll(
-                            EdgeInsets.only(top: 3, left: 3)),
-                        iconColor: MaterialStatePropertyAll(Colors.white24)),
-                    onPressed: () {
-                      print('yo mate!!');
-                    },
-                    child: const Align(
-                      alignment: Alignment.center,
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Icon(Icons.send_rounded),
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
+                ),
+              )),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
   }
 }

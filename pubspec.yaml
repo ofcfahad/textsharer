@@ -10,10 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   loading_animation_widget:
-  uuid: ^3.0.6
   device_info_plus: ^9.0.2
-  shared_preferences: ^2.1.2
-  supabase_flutter: ^1.10.4
   flutter_dotenv: ^5.1.0
   network_info_plus: ^4.0.1
   connectivity_plus: ^4.0.1
@@ -21,9 +18,9 @@ dependencies:
   permission_handler: ^10.3.0
   firedart: ^0.9.5
   dio: ^5.2.1+1
-  flutter_native_splash: ^2.3.1
   quickalert: ^1.0.1
-  restart_app: ^1.2.1
+  open_settings: ^2.0.2
+  airplane_mode_checker: ^2.0.0
 
 dev_dependencies:
   flutter_test:

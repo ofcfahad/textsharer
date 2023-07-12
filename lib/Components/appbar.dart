@@ -12,7 +12,7 @@ class BlurredAppBar extends StatelessWidget implements PreferredSizeWidget {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(
-            sigmaX: 10, sigmaY: 10), // Adjust the blur intensity as needed
+            sigmaX: 2, sigmaY: 2), // Adjust the blur intensity as needed
         child: AppBar(
           title: title,
           backgroundColor: Colors.transparent,

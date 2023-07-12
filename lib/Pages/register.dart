@@ -1,13 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:firedart/auth/user_gateway.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:quickalert/quickalert.dart';
-import 'package:restart_app/restart_app.dart';
 import 'package:textsharer/main.dart';
+import '../Components/functions.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -19,35 +20,90 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   String apiUrl = dotenv.env['SERVER_URL'] ?? '';
   final dio = Dio();
-  double progress = 0;
+  double progress = 0.5;
   String guideText = 'Please Wait!';
-  bool failedtoCreateUser = true;
+  bool isMobile = Platform.isAndroid;
+  bool airplaneMode = false;
+  bool wifi = false;
+  bool mobileData = false;
 
-  void goToHomePage() {
+  Future<void> setConnection() async {
+    bool isAirplane = await checkConnection('airplane');
+    bool isMobileData = await checkConnection('mobiledata');
+    bool isWifi = await checkConnection('wifi');
+
+    setState(() {
+      airplaneMode = isAirplane;
+      wifi = isWifi;
+      mobileData = isMobileData;
+    });
+  }
+
+  void setProgress(double value, String message) {
+    setState(() {
+      progress = value;
+      guideText = message;
+    });
+  }
+
+  void gotoHomePage() {
     Navigator.pushReplacementNamed(context, '/home');
   }
 
-  String replaceSpacesWithUnderscores(String input) {
-    return input.replaceAll(' ', '_');
+  void exitApp() async {
+    exit(0);
+  }
+
+  void showErrorPopup(String message, [Widget customWidget = const Text('')]) {
+    QuickAlert.show(
+      context: context,
+      type: QuickAlertType.warning,
+      title: 'Oops...',
+      text: message,
+      widget: customWidget,
+      backgroundColor: Colors.black,
+      titleColor: Colors.white,
+      textColor: Colors.white,
+      onConfirmBtnTap: exitApp,
+      barrierDismissible: false,
+    );
   }
 
   Future<bool> setDeviceInfo(device_) async {
     try {
-      final response = await dio.post('$apiUrl/getDeviceCustomData', data: {
-        'documentId': device_.id,
-      });
-      Map<String, dynamic> device = {
-        'deviceId': response.data['deviceId'],
-        'username': device_.email,
-        'deviceName': device_.displayName,
-        'deviceIcon': response.data['deviceIcon']
-      };
-      setState(() {
-        deviceInfo = device;
-      });
-      return true;
+      Response response = await dio.post(
+        '$apiUrl/getDeviceCustomData',
+        data: {
+          'documentId': device_.id,
+        },
+      ).timeout(const Duration(seconds: 6));
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> device = {
+          'deviceId': response.data['deviceId'],
+          'username': device_.email,
+          'deviceName': device_.displayName,
+          'deviceIcon': response.data['deviceIcon']
+        };
+
+        setState(() {
+          deviceInfo = device;
+        });
+
+        return true;
+      } else {
+        return false;
+      }
     } catch (e) {
       print('from setDeviceInfo: $e');
+      showErrorPopup(
+        'Something went wrong!',
+        const Text(
+          'Please try again later',
+          style: TextStyle(color: Colors.white, fontSize: 15),
+          textAlign: TextAlign.center,
+        ),
+      );
       return false;
     }
   }
@@ -64,37 +120,97 @@ class _RegisterState extends State<Register> {
         setProgress(0.5, 'Device Registered!');
         authenticateWithFirebase(deviceId, deviceName, deviceIcon);
       } else {
-        setState(() {
-          failedtoCreateUser = true;
-        });
-        showErrorPopup();
+        showErrorPopup('Something went wrong');
       }
     } catch (e) {
       print('from registerDevice: $e');
     }
   }
 
-  void restartApp() async {
-    Restart.restartApp();
-  }
-
-  void showErrorPopup() {
-    if (failedtoCreateUser) {
-      QuickAlert.show(
-        context: context,
-        type: QuickAlertType.error,
-        title: 'Oops...',
-        text: 'Sorry, something went wrong',
-        backgroundColor: Colors.black,
-        titleColor: Colors.white,
-        textColor: Colors.white,
-        onConfirmBtnTap: restartApp,
-      );
-    }
+  void handleRefresh() async {
+    await setConnection();
+    Navigator.pop(context);
+    authenticate();
   }
 
   void authenticateWithFirebase(
       String deviceId, String deviceName, int deviceIcon) async {
+    try {
+      bool connection = await checkInternetConnection();
+      if (!connection) {
+        showErrorPopup(
+            'You`re not connected to Internet',
+            isMobile
+                ? Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                            style: const ButtonStyle(
+                                backgroundColor:
+                                    MaterialStatePropertyAll(Color(0xFFde0038)),
+                                shape: MaterialStatePropertyAll(
+                                    CircleBorder(side: BorderSide.none))),
+                            onPressed: () {
+                              handleInternetSettingsClick('wifi');
+                            },
+                            child: Icon(
+                                wifi
+                                    ? Icons.wifi_rounded
+                                    : Icons.wifi_off_rounded,
+                                color: wifi ? Colors.white : Colors.white54)),
+                        ElevatedButton(
+                            style: const ButtonStyle(
+                                backgroundColor:
+                                    MaterialStatePropertyAll(Color(0xFFde0038)),
+                                shape: MaterialStatePropertyAll(
+                                    CircleBorder(side: BorderSide.none))),
+                            onPressed: () {
+                              handleInternetSettingsClick('mobiledata');
+                            },
+                            child: Icon(
+                              mobileData
+                                  ? Icons.e_mobiledata_rounded
+                                  : Icons.mobiledata_off_rounded,
+                              color: mobileData ? Colors.white : Colors.white54,
+                            )),
+                        ElevatedButton(
+                            style: const ButtonStyle(
+                                backgroundColor:
+                                    MaterialStatePropertyAll(Color(0xFFde0038)),
+                                shape: MaterialStatePropertyAll(
+                                    CircleBorder(side: BorderSide.none))),
+                            onPressed: () {
+                              handleInternetSettingsClick('airplane');
+                            },
+                            child: Icon(
+                              airplaneMode
+                                  ? Icons.airplanemode_active_rounded
+                                  : Icons.airplanemode_inactive_rounded,
+                              color:
+                                  airplaneMode ? Colors.white : Colors.white54,
+                            )),
+                        ElevatedButton(
+                            style: const ButtonStyle(
+                                backgroundColor:
+                                    MaterialStatePropertyAll(Color(0xFFde0038)),
+                                shape: MaterialStatePropertyAll(
+                                    CircleBorder(side: BorderSide.none))),
+                            onPressed: handleRefresh,
+                            child: const Icon(
+                              Icons.refresh_rounded,
+                              color: Colors.white,
+                            )),
+                      ],
+                    ),
+                  )
+                : const Text(''));
+        return;
+      }
+    } catch (e) {
+      print(e);
+    }
+
     String email = replaceSpacesWithUnderscores('$deviceName@textsharer.app');
     String password = deviceId.toString();
     try {
@@ -102,56 +218,17 @@ class _RegisterState extends State<Register> {
       await fireauth.signIn(email, password);
     } catch (e) {
       print('Authentication error: $e');
-      setProgress(0.4, 'Device Not Found! Registering Device');
+      setProgress(0.4, 'Device Record not found! Registering Device');
       registerDevice(deviceId, deviceName, deviceIcon);
       return;
     }
     User device = await fireauth.getUser();
+    setProgress(0.8, 'Almost Done!');
     bool response = await setDeviceInfo(device);
     if (response) {
       setProgress(1, 'Device Authenticated');
       print('Authenticated Device: ${deviceInfo['deviceName']}');
-      goToHomePage();
-    }
-  }
-
-  Future<Map<String, dynamic>> getDeviceInfo() async {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    //Windows
-    if (Platform.isWindows) {
-      WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
-      IconData icon = Icons.computer_rounded;
-      Map<String, dynamic> data = {
-        'os': 'Windows',
-        'deviceId': windowsInfo.deviceId,
-        'deviceName': windowsInfo.computerName,
-        'deviceIcon': icon.codePoint
-      };
-      return data;
-      //Android
-    } else if (Platform.isAndroid) {
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      IconData icon = Icons.phone_android;
-      Map<String, dynamic> data = {
-        'os': 'Android',
-        'deviceId': androidInfo.id,
-        'deviceName': androidInfo.model,
-        'deviceIcon': icon.codePoint
-      };
-      return data;
-      //Linux
-    } else if (Platform.isLinux) {
-      LinuxDeviceInfo linuxInfo = await deviceInfo.linuxInfo;
-      IconData icon = Icons.computer;
-      Map<String, dynamic> data = {
-        'os': 'Linux',
-        'deviceId': linuxInfo.id,
-        'deviceName': linuxInfo.name,
-        'deviceIcon': icon.codePoint
-      };
-      return data;
-    } else {
-      return {'os': 'unknown device'};
+      gotoHomePage();
     }
   }
 
@@ -163,17 +240,11 @@ class _RegisterState extends State<Register> {
         response['deviceId'], response['deviceName'], response['deviceIcon']);
   }
 
-  void setProgress(double value, String message) {
-    setState(() {
-      progress = value;
-      guideText = message;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     authenticate();
+    setConnection();
   }
 
   @override
@@ -197,12 +268,15 @@ class _RegisterState extends State<Register> {
             ),
             SizedBox(
               width: 300,
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 3,
-                semanticsLabel: 'Progress Bar',
-                backgroundColor: Colors.white10,
-                valueColor: const AlwaysStoppedAnimation(Colors.greenAccent),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(9999)),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 4,
+                  semanticsLabel: 'Progress Bar',
+                  backgroundColor: Colors.white10,
+                  valueColor: const AlwaysStoppedAnimation(Colors.greenAccent),
+                ),
               ),
             )
           ],
@@ -210,31 +284,4 @@ class _RegisterState extends State<Register> {
       ),
     );
   }
-}
-
-Card buildButton({
-  required onTap,
-  required title,
-  required text,
-  required leadingImage,
-}) {
-  return Card(
-    shape: const StadiumBorder(),
-    margin: const EdgeInsets.symmetric(
-      horizontal: 20,
-    ),
-    clipBehavior: Clip.antiAlias,
-    elevation: 1,
-    child: ListTile(
-      onTap: onTap,
-      leading: const CircleAvatar(
-        child: Icon(Icons.error),
-      ),
-      title: Text(title ?? ""),
-      subtitle: Text(text ?? ""),
-      trailing: const Icon(
-        Icons.keyboard_arrow_right_rounded,
-      ),
-    ),
-  );
 }

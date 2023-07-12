@@ -9,10 +9,11 @@ class BackgroundWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color.fromARGB(237, 34, 38, 39), Colors.white10])),
+          gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF212730), Colors.white24],
+      )),
       child: child,
     );
   }
