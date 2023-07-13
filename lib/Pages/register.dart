@@ -57,7 +57,7 @@ class _RegisterState extends State<Register> {
   void showErrorPopup(String message, [Widget customWidget = const Text('')]) {
     QuickAlert.show(
       context: context,
-      type: QuickAlertType.warning,
+      type: QuickAlertType.error,
       title: 'Oops...',
       text: message,
       widget: customWidget,
