@@ -103,7 +103,6 @@ class _HomePageState extends State<HomePage> {
                     .withOpacity(0.5), // Use a semi-transparent color
                 padding: const EdgeInsets.all(2),
                 child: ClipRect(
-                  // Apply the blur effect within the clip rect
                   child: BackdropFilter(
                     filter: ImageFilter.blur(
                       sigmaX: 5,
